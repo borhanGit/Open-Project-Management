@@ -26,7 +26,7 @@
 
         <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Sign in to your account</h2>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            OpenProject Laravel Edition • Open Source Project Management
+            OpenProject • Open Source Project Management
         </p>
     </div>
 
@@ -81,53 +81,6 @@
                     </button>
                 </div>
             </form>
-
-            <!-- Quick Demo Accounts One-Click Logins -->
-            <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-                    Quick Demo One-Click Sign In
-                </div>
-
-                <div class="grid grid-cols-1 gap-2">
-                    <a href="{{ route('auth.quick-login', 'admin@openproject.local') }}" 
-                       class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                            <span>Admin</span>
-                            <span class="text-[10px] text-slate-400 font-mono">admin@openproject.local</span>
-                        </div>
-                        <span class="text-blue-600 text-[11px] font-semibold">&rarr;</span>
-                    </a>
-
-                    <a href="{{ route('auth.quick-login', 'sarah@openproject.local') }}" 
-                       class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            <span>Project Manager</span>
-                            <span class="text-[10px] text-slate-400 font-mono">sarah@openproject.local</span>
-                        </div>
-                        <span class="text-blue-600 text-[11px] font-semibold">&rarr;</span>
-                    </a>
-
-                    <a href="{{ route('auth.quick-login', 'alex@openproject.local') }}" 
-                       class="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 transition">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            <span>Developer</span>
-                            <span class="text-[10px] text-slate-400 font-mono">alex@openproject.local</span>
-                        </div>
-                        <span class="text-blue-600 text-[11px] font-semibold">&rarr;</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Sign Up Link -->
-            <div class="mt-6 text-center text-xs text-slate-500">
-                Don't have an account? 
-                <a href="{{ route('register') }}" class="font-semibold text-blue-600 hover:underline">
-                    Create an account
-                </a>
-            </div>
 
         </div>
     </div>
