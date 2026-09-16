@@ -42,6 +42,7 @@ This guide covers setting up **OpenProject Laravel** using Docker Sail for local
 
 6. **Open in Browser**:
    - Web App: [http://localhost](http://localhost)
+   - Database GUI (phpMyAdmin): [http://localhost:8080](http://localhost:8080)
    - Mailpit (Email Sandbox): [http://localhost:8025](http://localhost:8025)
    - MySQL Host Port: `3307` (Credentials: `sail` / `password`, DB: `openproject`)
    - Redis Host Port: `6380`

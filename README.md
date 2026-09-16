@@ -62,6 +62,7 @@ cp .env.example .env
 
 ### 5. Access the Application
 - **Web App**: [http://localhost](http://localhost)
+- **Database GUI (phpMyAdmin)**: [http://localhost:8080](http://localhost:8080) (User: `sail`, Password: `password`)
 - **Email Sandbox (Mailpit)**: [http://localhost:8025](http://localhost:8025)
 - **Database (MySQL)**: `127.0.0.1:3307` (User: `sail`, Password: `password`, DB: `openproject`)
 
