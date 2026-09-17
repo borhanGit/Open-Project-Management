@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\UserCreatedMail;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
@@ -54,6 +57,7 @@ class UserController extends Controller
             'status' => ['required', 'in:active,locked'],
             'project_id' => ['nullable', 'exists:projects,id'],
             'role_id' => ['nullable', 'required_with:project_id', 'exists:roles,id'],
+            'send_welcome_email' => ['nullable', 'boolean'],
         ]);
 
         $user = User::create([
@@ -73,8 +77,22 @@ class UserController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.users.index')
-            ->with('success', "User '{$user->name}' was created successfully.");
+        $sendWelcomeEmail = $request->boolean('send_welcome_email', true);
+        if ($sendWelcomeEmail) {
+            try {
+                Mail::to($user->email)->send(new UserCreatedMail(
+                    user: $user,
+                    plainPassword: $validated['password'],
+                    loginUrl: route('login'),
+                ));
+            } catch (\Throwable $e) {
+                Log::warning("Failed to dispatch welcome email to {$user->email}: ".$e->getMessage());
+            }
+        }
+
+        $notice = "User '{$user->name}' was created successfully".($sendWelcomeEmail ? ' and a welcome email was sent.' : '.');
+
+        return redirect()->route('admin.users.index')->with('success', $notice);
     }
 
     public function update(Request $request, User $user)

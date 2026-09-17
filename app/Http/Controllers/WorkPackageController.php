@@ -20,9 +20,18 @@ class WorkPackageController extends Controller
         $query = WorkPackage::with(['project', 'type', 'status', 'priority', 'assignee', 'author']);
 
         if ($project) {
+            if (! $project->isVisibleTo($request->user())) {
+                abort(403, 'This is a private project. You must be an assigned project member or administrator to access it.');
+            }
             $query->where('project_id', $project->id);
-        } elseif ($request->filled('project_id')) {
-            $query->where('project_id', $request->input('project_id'));
+        } else {
+            $query->whereHas('project', function ($q) use ($request) {
+                $q->visibleTo($request->user());
+            });
+
+            if ($request->filled('project_id')) {
+                $query->where('project_id', $request->input('project_id'));
+            }
         }
 
         if ($request->filled('type_id')) {
@@ -59,7 +68,7 @@ class WorkPackageController extends Controller
 
         $workPackages = $query->paginate(15)->withQueryString();
 
-        $projects = Project::where('status', 'active')->orderBy('name')->get();
+        $projects = Project::visibleTo($request->user())->where('status', 'active')->orderBy('name')->get();
         $types = WorkPackageType::orderBy('position')->get();
         $statuses = WorkPackageStatus::orderBy('position')->get();
         $priorities = WorkPackagePriority::orderBy('position')->get();
@@ -105,6 +114,10 @@ class WorkPackageController extends Controller
 
     public function show(WorkPackage $workPackage)
     {
+        if (! $workPackage->project->isVisibleTo(auth()->user())) {
+            abort(403, 'This is a private project. You must be an assigned project member or administrator to access it.');
+        }
+
         $workPackage->load([
             'project',
             'type',
