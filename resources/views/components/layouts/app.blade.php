@@ -32,13 +32,13 @@
                     </div>
                     <div class="flex flex-col">
                         <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white leading-none">OpenProject</span>
-                        <span class="text-[10px] font-semibold tracking-wider text-blue-600 dark:text-blue-400 uppercase mt-0.5">Laravel Edition</span>
+                        
                     </div>
                 </a>
 
                 <!-- Project Selector Dropdown -->
                 @php
-                    $globalProjects = \App\Models\Project::where('status', 'active')->orderBy('name')->get();
+                    $globalProjects = \App\Models\Project::visibleTo(Auth::user())->where('status', 'active')->orderBy('name')->get();
                 @endphp
                 <div class="hidden md:block relative ml-4" x-data="{ open: false }">
                     <button @click="open = !open" @click.outside="open = false" type="button" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition">
@@ -104,6 +104,13 @@
                             <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
                                 <div class="text-xs font-bold text-slate-800 dark:text-white">{{ $currentUser->name }}</div>
                                 <div class="text-[11px] text-slate-400 truncate">{{ $currentUser->email }}</div>
+                            </div>
+
+                            <div class="p-1 border-b border-slate-100 dark:border-slate-800">
+                                <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition font-medium">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    <span>Profile & Security</span>
+                                </a>
                             </div>
 
                             <div class="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Switch Demo Persona</div>
@@ -221,16 +228,7 @@
 
             </div>
 
-            <!-- Footer info in Sidebar -->
-            <div class="p-4 border-t border-slate-100 dark:border-slate-800">
-                <div class="flex items-center justify-between text-xs text-slate-400">
-                    <span class="flex items-center gap-1.5 font-medium">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Sail Docker MySQL
-                    </span>
-                    <a href="https://github.com" target="_blank" class="hover:text-slate-600 dark:hover:text-slate-200">MIT v1.0</a>
-                </div>
-            </div>
+           
         </aside>
 
         <!-- Main Content Area -->
@@ -265,7 +263,7 @@
 
     <!-- Global Modal: Quick Create Work Package -->
     @php
-        $modalProjects = \App\Models\Project::where('status', 'active')->orderBy('name')->get();
+        $modalProjects = \App\Models\Project::visibleTo(Auth::user())->where('status', 'active')->orderBy('name')->get();
         $modalTypes = \App\Models\WorkPackageType::orderBy('position')->get();
         $modalStatuses = \App\Models\WorkPackageStatus::orderBy('position')->get();
         $modalPriorities = \App\Models\WorkPackagePriority::orderBy('position')->get();

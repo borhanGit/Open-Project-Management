@@ -103,3 +103,17 @@ erDiagram
 4. **Kanban Reactive Engine (`resources/views/projects/kanban.blade.php`)**:
    - Alpine.js component wrapping `SortableJS`.
    - Asynchronous `fetch()` calls to update task statuses and positions instantly on drag & drop.
+
+---
+
+## 4. Authentication, User Lifecycle & Security
+
+1. **User Onboarding via Admin**:
+   - When an administrator creates a new user via `/admin/users`, an invitation email is dispatched via `App\Mail\UserCreatedMail` containing their email, initial password, and sign-in URL.
+   - Admin can optionally toggle email dispatch.
+2. **Profile & Password Management (`/profile`)**:
+   - Authenticated users can modify their profile details (name and email).
+   - Password updates require re-verification of the `current_password` before saving newly hashed passwords.
+3. **Password Recovery (`/forgot-password` & `/reset-password/{token}`)**:
+   - Standard Laravel broker workflow with encrypted tokens stored in `password_reset_tokens`.
+   - In local development, all outbound emails are caught by **Mailpit** (`http://localhost:8025`).

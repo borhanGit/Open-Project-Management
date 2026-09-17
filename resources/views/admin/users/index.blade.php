@@ -220,6 +220,17 @@
                 </label>
             </div>
 
+            <!-- Email Notification -->
+            <div class="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="send_welcome_email" value="1" checked class="mt-0.5 rounded text-blue-600 focus:ring-blue-500">
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Send welcome email with login credentials</div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400">User will receive their email, initial password, and login link via email.</div>
+                    </div>
+                </label>
+            </div>
+
             <!-- Optional Initial Project & Role Assignment -->
             <div class="pt-3 border-t border-slate-100 dark:border-slate-800">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Initial Project & Role Assignment (Optional)</h4>

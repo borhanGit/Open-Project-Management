@@ -61,4 +61,45 @@ class Project extends Model
     {
         return 'identifier';
     }
+
+    /**
+     * Scope a query to only include projects visible to the given user.
+     */
+    public function scopeVisibleTo($query, ?User $user)
+    {
+        if (! $user) {
+            return $query->where('is_public', true);
+        }
+
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where('is_public', true)
+                ->orWhereHas('members', function ($m) use ($user) {
+                    $m->where('user_id', $user->id);
+                });
+        });
+    }
+
+    /**
+     * Determine whether the project is visible to the given user.
+     */
+    public function isVisibleTo(?User $user): bool
+    {
+        if (! $user) {
+            return (bool) $this->is_public;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($this->is_public) {
+            return true;
+        }
+
+        return $this->members()->where('user_id', $user->id)->exists();
+    }
 }

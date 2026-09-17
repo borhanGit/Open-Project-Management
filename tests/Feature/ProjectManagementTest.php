@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Project;
+use App\Models\Role;
 use App\Models\User;
 use App\Models\WorkPackage;
 use App\Models\WorkPackageStatus;
@@ -77,6 +78,37 @@ class ProjectManagementTest extends TestCase
         $showResponse->assertSee($project->name);
     }
 
+    public function test_user_can_create_private_project_with_unchecked_public_box(): void
+    {
+        // When checkbox is unchecked in browser, is_public key is omitted from payload
+        $response = $this->actingAs($this->user)->post('/projects', [
+            'name' => 'Confidential Vault Project',
+            'description' => 'Private project description',
+            // is_public intentionally omitted
+        ]);
+
+        $response->assertRedirect('/projects/confidential-vault-project');
+        $this->assertDatabaseHas('projects', [
+            'identifier' => 'confidential-vault-project',
+            'is_public' => false,
+        ]);
+    }
+
+    public function test_user_can_create_public_project_with_checked_public_box(): void
+    {
+        $response = $this->actingAs($this->user)->post('/projects', [
+            'name' => 'Community Open Project',
+            'description' => 'Public project description',
+            'is_public' => '1',
+        ]);
+
+        $response->assertRedirect('/projects/community-open-project');
+        $this->assertDatabaseHas('projects', [
+            'identifier' => 'community-open-project',
+            'is_public' => true,
+        ]);
+    }
+
     public function test_kanban_board_can_be_rendered(): void
     {
         $project = Project::first();
@@ -130,5 +162,59 @@ class ProjectManagementTest extends TestCase
         $archResponse = $this->get('/docs/architecture');
         $archResponse->assertStatus(200);
         $archResponse->assertSee('Architecture & System Design');
+    }
+
+    public function test_private_project_is_not_visible_to_non_member_standard_user(): void
+    {
+        $nonMember = User::where('email', 'alex@openproject.local')->first();
+        $privateProject = Project::where('is_public', false)->first();
+
+        // Project index should not list private project for non-member
+        $response = $this->actingAs($nonMember)->get('/projects');
+        $response->assertStatus(200);
+        $response->assertDontSee($privateProject->name);
+
+        // Accessing private project show directly should yield 403
+        $showResponse = $this->actingAs($nonMember)->get("/projects/{$privateProject->identifier}");
+        $showResponse->assertStatus(403);
+
+        // Accessing private project kanban should yield 403
+        $kanbanResponse = $this->actingAs($nonMember)->get("/projects/{$privateProject->identifier}/kanban");
+        $kanbanResponse->assertStatus(403);
+    }
+
+    public function test_private_project_is_always_accessible_by_admin(): void
+    {
+        $admin = User::where('is_admin', true)->first();
+        $privateProject = Project::where('is_public', false)->first();
+
+        $response = $this->actingAs($admin)->get('/projects');
+        $response->assertStatus(200);
+        $response->assertSee($privateProject->name);
+
+        $showResponse = $this->actingAs($admin)->get("/projects/{$privateProject->identifier}");
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee($privateProject->name);
+    }
+
+    public function test_private_project_becomes_accessible_when_user_is_assigned_as_member(): void
+    {
+        $user = User::where('email', 'alex@openproject.local')->first();
+        $privateProject = Project::where('is_public', false)->first();
+        $role = Role::first();
+
+        // Assign user as project member
+        $privateProject->members()->create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+        ]);
+
+        $response = $this->actingAs($user)->get('/projects');
+        $response->assertStatus(200);
+        $response->assertSee($privateProject->name);
+
+        $showResponse = $this->actingAs($user)->get("/projects/{$privateProject->identifier}");
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee($privateProject->name);
     }
 }

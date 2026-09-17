@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocController;
 use App\Http\Controllers\KanbanController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\WorkPackageController;
 use Illuminate\Support\Facades\Route;
@@ -13,19 +15,30 @@ use Illuminate\Support\Facades\Route;
 // Public Documentation
 Route::get('docs/{page?}', [DocController::class, 'show'])->name('docs.show');
 
-// Guest Authentication Routes
+// Guest Authentication & Password Recovery Routes
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
     Route::get('register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('register', [AuthController::class, 'register']);
     Route::get('quick-login/{email}', [AuthController::class, 'quickLogin'])->name('auth.quick-login');
+
+    // Password Reset
+    Route::get('forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
 });
 
 // Authenticated Application Routes
 Route::middleware('auth')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // User Profile & Password Management
+    Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     // Projects
     Route::resource('projects', ProjectController::class)->only(['index', 'store', 'show', 'update']);

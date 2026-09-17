@@ -14,16 +14,16 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $totalProjects = Project::where('status', 'active')->count();
-        $totalWorkPackages = WorkPackage::count();
+        $totalProjects = Project::visibleTo($user)->where('status', 'active')->count();
+        $totalWorkPackages = WorkPackage::whereHas('project', fn ($q) => $q->visibleTo($user))->count();
 
         $closedStatusIds = WorkPackageStatus::where('is_closed', true)->pluck('id');
-        $openWorkPackagesCount = WorkPackage::whereNotIn('status_id', $closedStatusIds)->count();
+        $openWorkPackagesCount = WorkPackage::whereHas('project', fn ($q) => $q->visibleTo($user))->whereNotIn('status_id', $closedStatusIds)->count();
 
         $inProgressStatus = WorkPackageStatus::where('name', 'In Progress')->first();
-        $inProgressCount = $inProgressStatus ? WorkPackage::where('status_id', $inProgressStatus->id)->count() : 0;
+        $inProgressCount = $inProgressStatus ? WorkPackage::whereHas('project', fn ($q) => $q->visibleTo($user))->where('status_id', $inProgressStatus->id)->count() : 0;
 
-        $totalLoggedHours = TimeEntry::sum('hours');
+        $totalLoggedHours = TimeEntry::whereHas('project', fn ($q) => $q->visibleTo($user))->sum('hours');
 
         $myAssignedTasks = $user ? WorkPackage::with(['project', 'type', 'status', 'priority'])
             ->where('assignee_id', $user->id)
@@ -32,12 +32,14 @@ class DashboardController extends Controller
             ->take(5)
             ->get() : collect();
 
-        $recentWorkPackages = WorkPackage::with(['project', 'type', 'status', 'priority', 'assignee'])
+        $recentWorkPackages = WorkPackage::whereHas('project', fn ($q) => $q->visibleTo($user))
+            ->with(['project', 'type', 'status', 'priority', 'assignee'])
             ->latest('updated_at')
             ->take(6)
             ->get();
 
-        $projects = Project::withCount(['workPackages', 'members'])
+        $projects = Project::visibleTo($user)
+            ->withCount(['workPackages', 'members'])
             ->latest()
             ->take(4)
             ->get();

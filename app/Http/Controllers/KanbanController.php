@@ -12,6 +12,10 @@ class KanbanController extends Controller
 {
     public function show(Project $project)
     {
+        if (! $project->isVisibleTo(auth()->user())) {
+            abort(403, 'This is a private project. You must be an assigned project member or administrator to access it.');
+        }
+
         $statuses = WorkPackageStatus::orderBy('position')->get();
         $types = WorkPackageType::orderBy('position')->get();
         $priorities = WorkPackagePriority::orderBy('position')->get();
@@ -32,7 +36,7 @@ class KanbanController extends Controller
             $groupedPackages[$status->id] = $workPackages->where('status_id', $status->id)->values();
         }
 
-        $allProjects = Project::where('status', 'active')->orderBy('name')->get();
+        $allProjects = Project::visibleTo(auth()->user())->where('status', 'active')->orderBy('name')->get();
 
         return view('projects.kanban', [
             'project' => $project,
