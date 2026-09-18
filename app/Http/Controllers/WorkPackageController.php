@@ -10,6 +10,7 @@ use App\Models\WorkPackageComment;
 use App\Models\WorkPackagePriority;
 use App\Models\WorkPackageStatus;
 use App\Models\WorkPackageType;
+use App\Notifications\TaskAssignedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -108,6 +109,13 @@ class WorkPackageController extends Controller
 
         $workPackage = WorkPackage::create($validated);
 
+        if ($workPackage->assignee_id) {
+            $assignee = User::find($workPackage->assignee_id);
+            if ($assignee) {
+                $assignee->notify(new TaskAssignedNotification($workPackage, Auth::user()));
+            }
+        }
+
         return redirect()->route('work-packages.show', $workPackage)
             ->with('success', "Work Package #{$workPackage->id} created successfully.");
     }
@@ -159,7 +167,16 @@ class WorkPackageController extends Controller
             'done_ratio' => 'nullable|integer|between:0,100',
         ]);
 
+        $originalAssigneeId = $workPackage->assignee_id;
+
         $workPackage->update($validated);
+
+        if ($workPackage->assignee_id && $workPackage->assignee_id != $originalAssigneeId) {
+            $assignee = User::find($workPackage->assignee_id);
+            if ($assignee) {
+                $assignee->notify(new TaskAssignedNotification($workPackage, Auth::user()));
+            }
+        }
 
         if ($request->wantsJson()) {
             return response()->json([
