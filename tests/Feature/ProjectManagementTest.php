@@ -217,4 +217,95 @@ class ProjectManagementTest extends TestCase
         $showResponse->assertStatus(200);
         $showResponse->assertSee($privateProject->name);
     }
+
+    public function test_admin_can_update_project_details_and_privacy(): void
+    {
+        $admin = User::where('is_admin', true)->first();
+        $project = Project::first();
+
+        $response = $this->actingAs($admin)->put("/projects/{$project->identifier}", [
+            'name' => 'Updated Project Name',
+            'description' => 'Updated project description text',
+            'status' => 'archived',
+            // Uncheck is_public
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('projects', [
+            'id' => $project->id,
+            'name' => 'Updated Project Name',
+            'description' => 'Updated project description text',
+            'status' => 'archived',
+            'is_public' => false,
+        ]);
+    }
+
+    public function test_project_manager_with_permission_can_update_project(): void
+    {
+        $user = User::factory()->create(['is_admin' => false]);
+        $project = Project::create([
+            'name' => 'Manager Test Project',
+            'identifier' => 'manager-test-project',
+            'description' => 'Initial description',
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $role = Role::create([
+            'name' => 'Lead Manager',
+            'slug' => 'lead-manager',
+            'permissions' => ['edit_project'],
+        ]);
+
+        $project->members()->create([
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+        ]);
+
+        $response = $this->actingAs($user)->put("/projects/{$project->identifier}", [
+            'name' => 'Manager Edited Title',
+            'description' => 'Updated by project manager',
+            'status' => 'active',
+            'is_public' => '1',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('projects', [
+            'id' => $project->id,
+            'name' => 'Manager Edited Title',
+            'is_public' => true,
+        ]);
+    }
+
+    public function test_unauthorized_user_cannot_update_project(): void
+    {
+        $nonAdmin = User::factory()->create(['is_admin' => false]);
+        $project = Project::create([
+            'name' => 'Restricted Project',
+            'identifier' => 'restricted-project',
+            'status' => 'active',
+            'is_public' => true,
+        ]);
+
+        $response = $this->actingAs($nonAdmin)->put("/projects/{$project->identifier}", [
+            'name' => 'Unauthorized Attempt',
+            'status' => 'active',
+        ]);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_project_cannot_set_itself_as_parent_project(): void
+    {
+        $admin = User::where('is_admin', true)->first();
+        $project = Project::first();
+
+        $response = $this->actingAs($admin)->put("/projects/{$project->identifier}", [
+            'name' => 'Self Parent Test',
+            'status' => 'active',
+            'parent_id' => $project->id,
+        ]);
+
+        $response->assertSessionHasErrors('parent_id');
+    }
 }

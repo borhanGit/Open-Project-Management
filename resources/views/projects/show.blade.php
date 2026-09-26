@@ -1,5 +1,12 @@
 <x-layouts.app :title="$project->name">
     
+    @if(session('success'))
+        <div class="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-xs font-medium flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
     <!-- Breadcrumb & Header -->
     <div class="mb-6">
         <div class="flex items-center gap-2 text-xs text-slate-400 mb-2">
@@ -28,6 +35,13 @@
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
+                @if(auth()->user()->isAdmin() || auth()->user()->hasProjectPermission($project, 'edit_project'))
+                    <button type="button" @click="$dispatch('open-modal', 'edit-project-modal')" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <span>Edit Project</span>
+                    </button>
+                @endif
+
                 <a href="{{ route('projects.kanban', $project) }}" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs">
                     <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
                     <span>Kanban Board</span>
@@ -189,5 +203,64 @@
             </div>
         </form>
     </x-modal>
+
+    @if(auth()->user()->isAdmin() || auth()->user()->hasProjectPermission($project, 'edit_project'))
+        <!-- Edit Project Modal -->
+        <x-modal name="edit-project-modal" title="Edit Project Settings" maxWidth="xl">
+            <form action="{{ route('projects.update', $project) }}" method="POST" class="space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Project Name *</label>
+                    <input type="text" name="name" value="{{ old('name', $project->name) }}" required
+                           class="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Status</label>
+                        <select name="status" class="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2">
+                            <option value="active" {{ old('status', $project->status) === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="archived" {{ old('status', $project->status) === 'archived' ? 'selected' : '' }}>Archived</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Parent Project (Optional)</label>
+                        <select name="parent_id" class="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2">
+                            <option value="">-- None (Top Level) --</option>
+                            @foreach($allProjects as $ap)
+                                @if($ap->id !== $project->id)
+                                    <option value="{{ $ap->id }}" {{ old('parent_id', $project->parent_id) == $ap->id ? 'selected' : '' }}>{{ $ap->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Description</label>
+                    <textarea name="description" rows="3" placeholder="Explain the high-level roadmap and scope..." 
+                              class="w-full text-sm rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-3 py-2">{{ old('description', $project->description) }}</textarea>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <label class="flex items-start gap-2.5 cursor-pointer">
+                        <input type="checkbox" name="is_public" id="edit_is_public_show" value="1" {{ old('is_public', $project->is_public) ? 'checked' : '' }} class="mt-0.5 rounded text-blue-600 focus:ring-blue-500">
+                        <div>
+                            <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">Public project (visible to all team members)</span>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Unchecking makes this project private and restricted strictly to assigned members and admins.</p>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" @click="$dispatch('close-modal', 'edit-project-modal')" class="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 dark:text-slate-400">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm">Save Changes</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
 
 </x-layouts.app>

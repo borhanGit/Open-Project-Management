@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\WorkPackageStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -105,6 +106,7 @@ class ProjectController extends Controller
         $totalSpent = $project->timeEntries()->sum('hours');
         $allUsers = User::orderBy('name')->get();
         $roles = Role::orderBy('name')->get();
+        $allProjects = Project::visibleTo(auth()->user())->where('status', 'active')->orderBy('name')->get();
 
         return view('projects.show', [
             'project' => $project,
@@ -114,6 +116,7 @@ class ProjectController extends Controller
             'totalSpent' => $totalSpent,
             'allUsers' => $allUsers,
             'roles' => $roles,
+            'allProjects' => $allProjects,
         ]);
     }
 
@@ -126,6 +129,7 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'parent_id' => ['nullable', 'exists:projects,id', Rule::notIn([$project->id])],
             'status' => 'required|in:active,archived',
             'is_public' => 'nullable|boolean',
         ]);
@@ -134,8 +138,7 @@ class ProjectController extends Controller
 
         $project->update($validated);
 
-        return redirect()->route('projects.show', $project)
-            ->with('success', "Project '{$project->name}' was updated successfully.");
+        return back()->with('success', "Project '{$project->name}' was updated successfully.");
     }
 
     public function addMember(Request $request, Project $project)
